@@ -55,8 +55,32 @@ class Blockchain {
         self.blocks.append(block)
     }
     
+    func getNextBlock(transactions: [Transaction]) -> Block {
+        let block = Block()
+        transactions.forEach { transaction in
+            block.addTransaction(transaction: transaction)
+        }
+        
+        let previousBlock = getPreviousBlock()
+        block.index = self.blocks.count
+        block.previousHash = previousBlock.hash
+        block.hash = generateHash(for: block)
+        return block
+    }
+    
+    private func getPreviousBlock() -> Block {
+        return self.blocks[self.blocks.count - 1]
+    }
+    
     func generateHash(for block: Block) -> String {
         var hash = block.key.sha1Hash()
+        
+        while(!hash.hasPrefix("00")) {
+            block.nonce += 1
+            hash = block.key.sha1Hash()
+            print(hash)
+        }
+        
         return hash
     }
 }
@@ -86,8 +110,12 @@ extension String {
 let genesisBlock = Block()
 let blockChain = Blockchain(genesisBlock: genesisBlock)
 
-let transaction = Transaction(from: "Mary", to: "Steve", amount: 20)
+let transaction = Transaction(from: "Mary", to: "John", amount: 10)
+print("----------------------------------------")
 
-let block1 = Block()
-block1.addTransaction(transaction: transaction)
-block1.key
+let block = blockChain.getNextBlock(transactions: [transaction])
+
+//let transaction = Transaction(from: "Mary", to: "Steve", amount: 20)
+//let block1 = Block()
+//block1.addTransaction(transaction: transaction)
+//block1.key
