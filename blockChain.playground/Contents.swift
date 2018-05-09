@@ -46,7 +46,7 @@ class Blockchain {
         addBlock(genesisBlock)
     }
     
-    private func addBlock(_ block: Block) {
+    func addBlock(_ block: Block) {
         if self.blocks.isEmpty {
             block.previousHash = "0000000000"
             block.hash = generateHash(for: block)
@@ -114,6 +114,9 @@ let transaction = Transaction(from: "Mary", to: "John", amount: 10)
 print("----------------------------------------")
 
 let block = blockChain.getNextBlock(transactions: [transaction])
+blockChain.addBlock(block)
+
+print(blockChain.blocks.count)
 
 //let transaction = Transaction(from: "Mary", to: "Steve", amount: 20)
 //let block1 = Block()
