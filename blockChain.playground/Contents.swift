@@ -2,23 +2,54 @@
 
 import Cocoa
 
+protocol SmartContract {
+    func apply(transaction: Transaction)
+}
+
+class TransactionTypeSmartContract : SmartContract {
+    
+    func apply(transaction: Transaction) {
+        
+        var fees = 0.0
+        
+        switch transaction.transactionType {
+            case .domestic:
+                fees = 0.02
+            case .international:
+                fees = 0.05
+        }
+        
+        transaction.fees = transaction.amount * fees
+        transaction.amount -= transaction.fees
+    }
+}
+
+enum TransactionType : String, Codable {
+    case domestic
+    case international
+}
+
 class Transaction : Codable {
     var from: String
     var to: String
     var amount: Double
+    var fees: Double = 0.0
+    var transactionType: TransactionType
     
-    init(from: String, to: String, amount: Double) {
+    init(from: String, to: String, amount: Double, transactionType: TransactionType) {
         self.from = from
         self.to = to
         self.amount = amount
+        self.transactionType = transactionType
     }
 }
 
-class Block {
+class Block : Codable {
     var index: Int = 0
     var previousHash: String = ""
     var hash: String!
     var nonce: Int
+    
     private (set) var transactions: [Transaction] = [Transaction]()
     
     var key: String {
@@ -39,16 +70,21 @@ class Block {
     }
 }
 
-class Blockchain {
+class Blockchain : Codable {
     private (set) var blocks: [Block] = [Block]()
+    private (set) var smartContracts: [SmartContract] = [TransactionTypeSmartContract()]
     
     init(genesisBlock: Block) {
         addBlock(genesisBlock)
     }
     
+    private enum CodingKeys: CodingKey {
+        case blocks
+    }
+    
     func addBlock(_ block: Block) {
         if self.blocks.isEmpty {
-            block.previousHash = "0000000000"
+            block.previousHash = "0000000000000000"
             block.hash = generateHash(for: block)
         }
         
@@ -110,15 +146,21 @@ extension String {
 let genesisBlock = Block()
 let blockChain = Blockchain(genesisBlock: genesisBlock)
 
-let transaction = Transaction(from: "Mary", to: "John", amount: 10)
+let transaction = Transaction(from: "Mary", to: "John", amount: 10, transactionType: .domestic)
 print("----------------------------------------")
 
 let block = blockChain.getNextBlock(transactions: [transaction])
 blockChain.addBlock(block)
 
-print(blockChain.blocks.count)
+let data = try! JSONEncoder().encode(blockChain)
+let blockchainJSON = String(data: data, encoding: .utf8)
 
-//let transaction = Transaction(from: "Mary", to: "Steve", amount: 20)
-//let block1 = Block()
-//block1.addTransaction(transaction: transaction)
-//block1.key
+print(blockchainJSON!)
+
+/*
+print(blockChain.blocks.count)
+let transaction1 = Transaction(from: "Mary", to: "Steve", amount: 20)
+let block1 = Block()
+block1.addTransaction(transaction: transaction)
+block1.key
+*/
